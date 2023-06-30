@@ -39,6 +39,13 @@ class Agent:
         self.immuneSystem = configuration["immuneSystem"]
         self.ethicalFactor = configuration["ethicalFactor"]
         self.ethicalTheory = configuration["ethicalTheory"]
+        
+        self.cultureWeight = configuration["cultureWeight"]
+        self.tradingWeight = configuration["tradingWeight"]
+        self.lendingWeight = configuration["lendingWeight"]
+        self.reproductionWeight = configuration["reproductionWeight"]
+        self.diseaseWeightCoefficient = configuration["diseaseWeightCoefficient"]
+        self.wealthWeightCoefficient = configuration["wealthWeightCoefficient"]
 
         self.alive = True
         self.age = 0
@@ -488,6 +495,14 @@ class Agent:
             return agent.wealth
 
     def findBestCell(self):
+        cultureWeight = self.cultureWeight
+        tradeWeight = self.tradingWeight
+        lendWeight = self.lendingWeight
+        reproductionWeight = self.reproductionWeight
+        diseaseWeightCoef = self.diseaseWeightCoefficient
+        #TODO: distanceWeightcoef - implementation TBD
+        wealthWeightCoef = self.wealthWeightCoefficient
+
         self.neighborhood = self.findNeighborhood()
         retaliators = self.findRetaliatorsInVision()
         totalMetabolism = self.sugarMetabolism + self.spiceMetabolism
@@ -510,10 +525,10 @@ class Agent:
         for currCell in self.cellsInVision:
             cell = currCell["cell"]
             travelDistance = currCell["distance"]
-
             if cell.isOccupied() == True and self.aggressionFactor == 0:
                 continue
             prey = cell.agent
+            
             # Avoid attacking agents ineligible to attack
             if prey != None and self.isNeighborValidPrey(prey) == False:
                 continue
@@ -521,6 +536,7 @@ class Agent:
             preyWealth = prey.wealth if prey != None else 0
             preySugar = prey.sugar if prey != None else 0
             preySpice = prey.spice if prey != None else 0
+            
             # Aggression factor may lead agent to see more reward than possible meaning combat itself is a reward
             welfarePreySugar = self.aggressionFactor * min(combatMaxLoot, preySugar)
             welfarePreySpice = self.aggressionFactor * min(combatMaxLoot, preySpice)
@@ -534,25 +550,47 @@ class Agent:
             if prey != None and retaliators[preyTribe] > self.wealth + cellWealth:
                 continue
 
-            if bestCell == None:
-                bestCell = cell
-                bestRange = travelDistance
-                bestWealth = cellWealth
-
-            # Select closest cell with the most resources
-            if cellWealth > bestWealth or (cellWealth == bestWealth and travelDistance < bestRange):
-                bestRange = travelDistance
-                bestCell = cell
-                bestWealth = cellWealth
-
-            cellRecord = {"cell": cell, "wealth": cellWealth, "range": travelDistance}
+            cellRecord = {"cell": cell, "wealth": cellWealth, "range": travelDistance, "weights": {"cultureWeight": 0, "tradeWeight": 0, "reproductionWeight": 0, "lendWeight": 0, "diseaseWeight": 0, "wealthWeight": 0}}
             potentialCells.append(cellRecord)
-
+        
+        #weigh factors
+        for record in potentialCells:
+            self.findMarginalRateOfSubstitution()
+            for neighborCell in record["cell"].neighbors:
+                neighborAgent = neighborCell.agent
+                if neighborAgent == None:
+                    continue
+                if neighborAgent.tribe != self.tribe:
+                    record["weights"]["cultureWeight"] += cultureWeight
+                if self.tradeFactor != 0:
+                    if (self.marginalRateOfSubstitution != neighborAgent.marginalRateOfSubstitution):
+                        record["weights"]["tradeWeight"] += tradeWeight
+                if self.isFertile() and (neighborAgent != None) and (self.isNeighborReproductionCompatible(neighborAgent)):
+                    record["weights"]["reproductionWeight"] += reproductionWeight
+                if self.isLender() and neighborAgent.isBorrower():
+                        record["weights"]["lendWeight"] += lendWeight
+                if len(neighborAgent.diseases) > 0:
+                    #TODO: implement more complex logic weighing if one is already sick
+                    record["weights"]["diseaseWeight"] -= len(neighborAgent.diseases)*diseaseWeightCoef
+            if self.diseases:
+                popCount = 0
+                for cell in record["cell"].neighbors:
+                    if (cell.agent != None):
+                        popCount += 1
+                record["weights"]["diseaseWeight"] -= popCount*diseaseWeightCoef*len(self.diseases)
+            record["weights"]["wealthWeight"] = record["wealth"]*wealthWeightCoef
+            
+        for record in potentialCells:
+            record["weights"]["totalWeight"] = sum(record["weights"].values())
+            
+        sortedCells = self.sortCellsByWeight(potentialCells)
+        sortedCells.reverse()
+        bestCell = sortedCells[0]["cell"] if len(sortedCells) else None
+        
         if self.ethicalFactor > 0:
             bestCell = self.findBestEthicalCell(potentialCells)
         if bestCell == None:
             bestCell = self.cell
-
         if self.debug == True:
             print("Agent {0} moving to ({1},{2})".format(str(self), bestCell.x, bestCell.y))
         return bestCell
@@ -561,8 +599,6 @@ class Agent:
         if len(cells) == 0:
             return None
         bestCell = None
-        cells = self.sortCellsByWealth(cells)
-        cells.reverse()
         if self.debug == True:
             i = 0
             while i < len(cells):
@@ -649,6 +685,12 @@ class Agent:
         parentLoanDuration = [self.loanDuration, mate.loanDuration]
         parentMaxFriends = [self.maxFriends, mate.maxFriends]
         parentEthicalFactors = [self.ethicalFactor, mate.ethicalFactor]
+        parentCultureWeights = [self.cultureWeight, mate.cultureWeight]
+        parentTradingWeights = [self.tradingWeight, mate.tradingWeight]
+        parentLendingWeights = [self.lendingWeight, mate.lendingWeight]
+        parentReproductionWeights = [self.reproductionWeight, mate.reproductionWeight]
+        parentDiseaseWeights = [self.diseaseWeightCoefficient, mate.diseaseWeightCoefficient]
+        parentWealthWeights = [self.wealthWeightCoefficient, mate.wealthWeightCoefficient]
         # Each parent gives 1/2 their starting endowment for child endowment
         childStartingSugar = (self.startingSugar / 2) + (mate.startingSugar / 2)
         childStartingSpice = (self.startingSpice / 2) + (mate.startingSpice / 2)
@@ -685,6 +727,7 @@ class Agent:
                     childImmuneSystem.append(self.startingImmuneSystem[i])
                 else:
                     childImmuneSystem.append(mismatchBits[random.randrange(2)])
+                    
         childAggressionFactor = parentAggressionFactors[random.randrange(2)]
         childTradeFactor = parentTradeFactors[random.randrange(2)]
         childLookaheadFactor = parentLookaheadFactors[random.randrange(2)]
@@ -692,13 +735,22 @@ class Agent:
         childBaseInterestRate = parentBaseInterestRates[random.randrange(2)]
         childLoanDuration = parentLoanDuration[random.randrange(2)]
         childEthicalFactor = parentEthicalFactors[random.randrange(2)]
+        childCultureWeight = parentCultureWeights[random.randrange(2)]
+        childTradingWeight = parentTradingWeights[random.randrange(2)]
+        childLendingWeight = parentLendingWeights[random.randrange(2)]
+        childReproductionWeight = parentReproductionWeights[random.randrange(2)]
+        childDiseaseWeight = parentDiseaseWeights[random.randrange(2)]
+        childWealthWeight = parentWealthWeights[random.randrange(2)]
+        
         endowment = {"movement": childMovement, "vision": childVision, "maxAge": childMaxAge, "sugar": childStartingSugar,
                      "spice": childStartingSpice, "sex": childSex, "fertilityAge": childFertilityAge, "infertilityAge": childInfertilityAge, "tags": childTags,
                      "aggressionFactor": childAggressionFactor, "maxFriends": childMaxFriends, "seed": self.seed, "sugarMetabolism": childSugarMetabolism,
                      "spiceMetabolism": childSpiceMetabolism, "inheritancePolicy": self.inheritancePolicy, "tradeFactor": childTradeFactor,
                      "lookaheadFactor": childLookaheadFactor, "lendingFactor": childLendingFactor, "baseInterestRate": childBaseInterestRate,
                      "loanDuration": childLoanDuration, "immuneSystem": childImmuneSystem, "fertilityFactor": childFertilityFactor,
-                     "ethicalFactor": childEthicalFactor, "ethicalTheory": childEthicalTheory}
+                     "ethicalFactor": childEthicalFactor, "ethicalTheory": childEthicalTheory, "cultureWeight": childCultureWeight,
+                     "tradingWeight": childTradingWeight, "lendingWeight": childLendingWeight, "reproductionWeight": childReproductionWeight,
+                     "diseaseWeightCoefficient": childDiseaseWeight, "wealthWeightCoefficient": childWealthWeight}
         return endowment
 
     def findCurrentSpiceDebt(self):
@@ -1024,6 +1076,7 @@ class Agent:
         sugarscape = self.cell.environment.sugarscape
         sugarscape.addDisease(disease, agent)
 
+    #Deprecated
     def sortCellsByWealth(self, cells):
         # Insertion sort of cells by wealth with range as a tiebreaker
         i = 0
@@ -1037,6 +1090,20 @@ class Agent:
             i += 1
         return cells
 
+    def sortCellsByWeight(self, cells):
+        # Insertion sort of cells by total weight with range as a tiebreaker
+        # Helper function for findBestCell
+        i = 0
+        while i < len(cells):
+            j = i
+            while j > 0 and (cells[j - 1]["weights"]["totalWeight"] > cells[j]["weights"]["totalWeight"] or (cells[j - 1]["weights"]["totalWeight"] == cells[j]["weights"]["totalWeight"] and cells[j - 1]["range"] <= cells[j]["range"])):
+                currCell = cells[j]
+                cells[j] = cells[j - 1]
+                cells[j - 1] = currCell
+                j -= 1
+            i += 1
+        return cells
+     
     def updateDiseaseEffects(self, disease):
         # If disease not in list of diseases, agent has recovered and undo its effects
         recoveryCheck = -1

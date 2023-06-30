@@ -95,6 +95,14 @@ agentBaseInterestRate: [float, float]
     Set the interest rate for an agent's lending as a percentage.
     Default: [0.0, 0.0]
 
+agentCultureWeight: [float, float]
+    Sets the value for how much an agent weights cultural exchange when finding their best cell
+    Default: [0.0, 0.0]
+
+agentDiseaseWeightCoefficient: [float, float]
+    Sets the value for how much an agent weights avoiding disease transmission finding their best cell
+    Default: [0.0, 0.0]
+
 agentEthicalFactor: [float, float]
     Set the agent weight of ethical decisionmaking over biological imperatives.
     Default: [0, 0]
@@ -129,6 +137,10 @@ agentLendingFactor: [float, float]
     Set lending aggressiveness of agent.
     The more aggressive an agent is to lend, the higher the offered interest rate will be.
     Default: [0, 0]
+
+agentLendingWeight: [float, float]
+    Sets the value for how much an agent weights lending opportunities when finding their best cell
+    Default: [0.0, 0.0]
 
 agentLoanDuration: [int, int]
     Set the agent's provided loan duration in timesteps.
@@ -167,6 +179,10 @@ agentReplacements: int
     Set maximum number of agents to replace in environment on agent death.
     Default: 0
 
+agentReproductionWeight: [float, float]
+    Sets the value for how much an agent weights mating opportunities when finding their best cell
+    Default: [0.0, 0.0]
+
 agentSpiceMetabolism: [float, float]
     Set agent metabolism for spice per timestep.
     Default: [0, 0]
@@ -198,11 +214,19 @@ agentTagStringLength: int
 agentTradeFactor: [float, float]
     Set agent trade aggressiveness.
     The more aggressive in trading an agent, the more resources they will attempt to trade.
-    Default: [0, 0]
+    Default: [0, 0] 
+
+agentTradingWeight: [float, float]
+    Sets the value for how much an agent weights trading opportunities when finding their best cell
+    Default: [0.0, 0.0]
 
 agentVision: [int, int]
     Set the distance in the four cardinal directions an agent can see.
     Default: [1, 6]
+
+agentWealthWeightCoefficient: [float, float]
+    Sets the value for how much an agent weights wealth accumulation when finding their best cell
+    Default: [0.0, 0.0]
 
 debugMode: bool
     Set the debug printing mode.

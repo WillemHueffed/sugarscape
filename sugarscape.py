@@ -387,6 +387,12 @@ class Sugarscape:
         inheritancePolicy = configs["agentInheritancePolicy"]
         ethicalFactor = configs["agentEthicalFactor"]
         ethicalTheory = configs["agentEthicalTheory"]
+        cultureWeight = configs["agentCultureWeight"]
+        tradingWeight = configs["agentTradingWeight"]
+        lendingWeight = configs["agentLendingWeight"]
+        reproductionWeight = configs["agentReproductionWeight"]
+        diseaseWeight = configs["agentDiseaseWeightCoefficicent"]
+        wealthWeight = configs["agentWealthWeightCoefficient"]
 
         configurations = {"aggressionFactor": {"endowments": [], "curr": aggressionFactor[0], "min": aggressionFactor[0], "max": aggressionFactor[1]},
                           "baseInterestRate": {"endowments": [], "curr": baseInterestRate[0], "min": baseInterestRate[0], "max": baseInterestRate[1]},
@@ -407,7 +413,13 @@ class Sugarscape:
                           "sugar": {"endowments": [], "curr": startingSugar[0], "min": startingSugar[0], "max": startingSugar[1]},
                           "sugarMetabolism": {"endowments": [], "curr": sugarMetabolism[0], "min": sugarMetabolism[0], "max": sugarMetabolism[1]},
                           "tradeFactor": {"endowments": [], "curr": tradeFactor[0], "min": tradeFactor[0], "max": tradeFactor[1]},
-                          "vision": {"endowments": [], "curr": vision[0], "min": vision[0], "max": vision[1]}
+                          "vision": {"endowments": [], "curr": vision[0], "min": vision[0], "max": vision[1]},
+                          "cultureWeight": {"endowments": [], "curr": cultureWeight[0], "min": cultureWeight[0], "max": cultureWeight[1]},
+                          "tradingWeight": {"endowments": [], "curr": tradingWeight[0], "min": tradingWeight[0], "max": tradingWeight[1]},
+                          "lendingWeight": {"endowments": [], "curr": lendingWeight[0], "min": lendingWeight[0], "max": lendingWeight[1]},
+                          "reproductionWeight": {"endowments": [], "curr": reproductionWeight[0], "min": reproductionWeight[0], "max": reproductionWeight[1]},
+                          "diseaseWeightCoefficient": {"endowments": [], "curr": diseaseWeight[0], "min": diseaseWeight[0], "max": diseaseWeight[1]},
+                          "wealthWeightCoefficient": {"endowments": [], "curr": wealthWeight[0], "min": wealthWeight[0], "max": wealthWeight[1]}
                           }
 
         for config in configurations:
@@ -710,6 +722,8 @@ if __name__ == "__main__":
     # Set default values for simulation configuration
     configuration = {"agentAggressionFactor": [0, 0],
                      "agentBaseInterestRate": [0.0, 0.0],
+                     "agentCultureWeight": [0, 0],
+                     "agentDiseaseWeightCoefficicent": [0, 0],
                      "agentEthicalFactor": [0, 0],
                      "agentEthicalTheory": "none",
                      "agentFemaleInfertilityAge": [0, 0],
@@ -718,6 +732,7 @@ if __name__ == "__main__":
                      "agentImmuneSystemLength": 0,
                      "agentInheritancePolicy": "none",
                      "agentLendingFactor": [0, 0],
+                     "agentLendingWeight": [0, 0],
                      "agentLoanDuration": [0, 0],
                      "agentLookaheadFactor": [0, 0],
                      "agentMaleInfertilityAge": [0, 0],
@@ -727,6 +742,7 @@ if __name__ == "__main__":
                      "agentMaxFriends": [0, 0],
                      "agentMovement": [1, 6],
                      "agentReplacements": 0,
+                     "agentReproductionWeight": [0, 0],
                      "agentSpiceMetabolism": [0, 0],
                      "agentStartingSpice": [0, 0],
                      "agentStartingSugar": [10, 40],
@@ -734,7 +750,9 @@ if __name__ == "__main__":
                      "agentSugarMetabolism": [1, 4],
                      "agentTagStringLength": 0,
                      "agentTradeFactor": [0, 0],
+                     "agentTradingWeight": [0, 0],
                      "agentVision": [1, 6],
+                     "agentWealthWeightCoefficient": [1, 1],
                      "debugMode": False,
                      "diseaseAggressionPenalty": [0, 0],
                      "diseaseFertilityPenalty": [0, 0],
